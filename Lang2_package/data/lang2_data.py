@@ -14,20 +14,22 @@ class MECOL2Data:
                  n_splits: int = 5,
                  n_repeats: int = 10,
                  path: Path = Path("../Datasets/MECO"),
+                 name="ru_data.xlsx"
                  ):
 
+        assert False, "Continue modifying the script from here!"
         self.path = path
+        self.name = name
         self.n_splits = n_splits
         self.n_repeats = n_repeats
         self.xlsx_file = pd.ExcelFile
-        self.sheet_names = ["sheet 1"]
+        self.sheet_names = ["Sheet 1"]
 
-        self.xlsx_demo = pd.ExcelFile(os.path.join(self.path, "demo.xlsx"))
-        self.xlsx_ia = pd.ExcelFile(os.path.join(self.path, "IA_report.xlsx"))
-        self.xlsx_fix = pd.ExcelFile(os.path.join(self.path, "Fixation_report.xlsx"))
-        self.xlsx_fix_stats = pd.ExcelFile(os.path.join(self.path, "Fix_stats.xlsx"))
+        self.xlsx_demo = pd.ExcelFile(os.path.join(self.path, "demo_alllang.xlsx"))
+        self.xlsx_age_gender = pd.ExcelFile(os.path.join(self.path, "age_gender.xlsx"))
+        self.xlsx_fix = pd.ExcelFile(os.path.join(self.path, "DATA"))
 
-        self.ia_datasets = defaultdict(list)
+        self.age_gender = defaultdict(list)
         self.fix_datasets = defaultdict(list)
         self.demo_datasets = defaultdict(list)
 
