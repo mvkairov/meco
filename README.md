@@ -1,1 +1,1 @@
-# L2_MECO
+# L2 MECO Project
