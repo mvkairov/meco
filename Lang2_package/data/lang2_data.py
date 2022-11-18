@@ -8,21 +8,19 @@ from collections import defaultdict
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
 
-class DyslexiaData:
-    """" various forms of dataset(s)  """
+class MECOL2Data:
+    """" Various data sources """
     def __init__(self,
                  n_splits: int = 5,
                  n_repeats: int = 10,
-                 path: Path= Path("../datasets"),
-                 names: list = ["demo", "IA_report", "Fixation_report",],
+                 path: Path = Path("../Datasets/MECO"),
                  ):
 
         self.path = path
-        self.names = names
         self.n_splits = n_splits
         self.n_repeats = n_repeats
         self.xlsx_file = pd.ExcelFile
-        self.sheet_names = ["dyslexia", "norm", "risk"]
+        self.sheet_names = ["sheet 1"]
 
         self.xlsx_demo = pd.ExcelFile(os.path.join(self.path, "demo.xlsx"))
         self.xlsx_ia = pd.ExcelFile(os.path.join(self.path, "IA_report.xlsx"))
