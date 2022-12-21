@@ -50,9 +50,9 @@ class L2DataPreprocessor:
                  path_to_save_data='',
                  print_debug=False):
 
-        self.print_debug = print_debug
         self.language_name = language_name
         self.path_to_save_data = path_to_save_data
+        self.print_debug = print_debug
 
         self.age_gender = pd.read_excel(path_to_load_data + 'age_gender.xlsx').dropna()
         self.check_age_gender_data()
@@ -72,8 +72,11 @@ class L2DataPreprocessor:
         }
         self.rescale_l2_scores()
 
-        self.lang_data = pd.read_excel(path_to_load_data + f'DATA/{language_name}_data.xlsx').dropna()
+        self.lang_data = pd.read_excel(path_to_load_data + f'CLEAN_DATA/{language_name}_data.xlsx').dropna()
         self.check_lang_data()
+
+        subid_dict = dict(zip(self.demo_all_lang.subid, self.demo_all_lang.SubjectID))
+        self.lang_data['SubjectID'].map(subid_dict)
         self.lang_data_subject_id = set(self.lang_data.SubjectID)
 
         self.age_gender_lang = self.age_gender.loc[self.age_gender.lang == language_name]

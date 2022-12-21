@@ -13,7 +13,7 @@ class CommandLine:
         parser.add_argument("--path_to_load_data", help="folder to load data (required)", required=True)
         parser.add_argument("--path_to_save_data", help="folder to save data", required=False,
                             default="Datasets/DataToUse/")
-        parser.add_argument("--require_debug", help="print debug data", required=False)
+        parser.add_argument("--require_debug", help="print debug data", required=False, default="False")
 
         self.argument = parser.parse_args()
 
@@ -26,10 +26,15 @@ if __name__ == '__main__':
 
     if args.path_to_save_data:
         path_to_save_data = args.path_to_save_data
-    if args.require_debug:
+    else:
+        print('will save to Datasets/DataToUse/')
+    if args.require_debug and args.require_debug == "True":
         debug = True
 
-    l2_preprocessor = L2DataPreprocessor(language_name, path_to_load_data, path_to_save_data, print_debug=debug)
+    l2_preprocessor = L2DataPreprocessor(language_name=language_name,
+                                         path_to_load_data=path_to_load_data,
+                                         path_to_save_data=path_to_save_data,
+                                         print_debug=debug)
     if debug:
         l2_preprocessor.print_missing_data()
     l2_preprocessor.midterm_conclusion()
