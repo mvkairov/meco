@@ -234,4 +234,3 @@ class L2DataPreprocessor:
         )
 
         lang_fix_demo.to_csv(self.path_to_save_data + f'{self.language_name}_fix_demo.csv', index=False)
-
