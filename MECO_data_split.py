@@ -19,8 +19,8 @@ requirements:
 lang_list = ['du', 'ee', 'fi', 'ge', 'gr', 'he', 'it', 'no', 'ru', 'sp', 'it']
 
 
-def concat_MECO_langs(*langs, path_to_data='../Datasets/DataToUse/'):
-    if langs == 'all':
+def concat_MECO_langs(*langs, path_to_data='Datasets/DataToUse/'):
+    if langs == ['all']:
         langs = lang_list
     return pd.concat([pd.read_csv(f'{path_to_data}{lang}_fix_demo.csv') for lang in langs])
 
