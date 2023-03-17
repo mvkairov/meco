@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from Preprocessing.MECO_data_split import MECODataSplit, concat_MECO_langs
 from sklearn.utils import shuffle
 from keras.utils import to_categorical
