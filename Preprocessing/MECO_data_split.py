@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import label_binarize
+from sklearn.utils import shuffle
 
 '''
 
@@ -17,17 +19,57 @@ requirements:
 '''
 
 lang_list = ['du', 'ee', 'fi', 'ge', 'gr', 'he', 'it', 'no', 'ru', 'sp', 'it']
+fix_cols = ['Fix_X', 'Fix_Y', 'Fix_Duration']
+demo_cols = ['motiv', 'IQ', 'Age', 'Sex']
 
 
-def concat_MECO_langs(*langs, path_to_data='Datasets/DataToUse/'):
+def concat_MECO_langs(*langs, path_to_data='../Datasets/DataToUse/'):
     if langs == ['all']:
         langs = lang_list
     return pd.concat([pd.read_csv(f'{path_to_data}{lang}_fix_demo.csv') for lang in langs])
 
 
+def split_into_rows(data, cols='fix+demo', target='Target_Label', target_onehot=False, with_values_only=None):
+    if cols == 'fix':
+        cols = fix_cols
+    elif cols == 'demo':
+        cols = demo_cols
+    elif cols == 'fix+demo':
+        cols = fix_cols + demo_cols
+
+    for col, values in with_values_only.items():
+        data = data[data[col].isin(values)]
+
+    X, y = data[cols], data[target]
+    X, y = shuffle(X, y)
+    if target_onehot:
+        y = label_binarize(y, classes=list(range(6)))
+
+    return X, y
+
+
+def resample_Xy(X, y, resample_type=None, series_length=None):
+    if resample_type == 'truncate':
+        remove_indices = []
+        for i in range(len(X)):
+            if len(X[i]) >= series_length:
+                X[i] = X[i][:series_length]
+            else:
+                remove_indices.append(i)
+        for i in sorted(remove_indices, reverse=True):
+            if i < len(X):
+                X.pop(i)
+                y.pop(i)
+    return np.array(X), np.array(y)
+
+
 class MECODataSplit:
-    def __init__(self, lang_data, model='Classification'):
-        self.data = lang_data
+    def __init__(self, *langs, target_rows=None):
+        if target_rows is None:
+            target_rows = ['Target_Label']
+        self.target_rows = target_rows
+
+        self.data = concat_MECO_langs(*langs)
         self.data = self.data.astype({
             "Text_ID": int,
             "Fix_X": int,
@@ -50,14 +92,9 @@ class MECODataSplit:
             "Target_Ave": float,
             "Target_Label": int
         })
-        self.model = model
 
-        self.fix_cols = ['Fix_X', 'Fix_Y', 'Fix_Duration']
-        self.demo_cols = ['motiv', 'IQ', 'Age', 'Sex']
-
-    def get_X_y(self, labels, include_cols):
-        X = []
-        y = []
+    def get_Xy(self, labels, include_cols):
+        X, y = [], []
         combinations = np.array(np.meshgrid(*labels.values())).T.reshape(-1, len(labels))
 
         for values in combinations:
@@ -70,26 +107,8 @@ class MECODataSplit:
             cur_rows = self.data.query(condition_query[:-2])
             if not cur_rows.empty:
                 X.append(cur_rows[include_cols])
-                if self.model == 'Classification':
-                    y.append(cur_rows['Target_Label'].iloc[0])
-                else:
-                    y.append(cur_rows['Target_Ave'].iloc[0])
-
+                y.append(cur_rows[self.target_rows].iloc[0])
         return X, y
-
-    def resample_X_y(self, X, y, resample_type=None, series_length=None):
-        if resample_type == 'truncate':
-            remove_indices = []
-            for i in range(len(X)):
-                if len(X[i]) >= series_length:
-                    X[i] = X[i][:series_length]
-                else:
-                    remove_indices.append(i)
-            for i in sorted(remove_indices, reverse=True):
-                if i < len(X):
-                    X.pop(i)
-                    y.pop(i)
-        return np.array(X), np.array(y)
 
     def split_by_unique_values(self, split_cols, include_cols='fix',
                                train_on_values=None, test_on_values=None,
@@ -103,22 +122,21 @@ class MECODataSplit:
         test_labels = test_on_values
 
         if include_cols == 'fix':
-            include_cols = self.fix_cols
+            include_cols = fix_cols
         elif include_cols == 'demo':
-            include_cols = self.fix_cols + self.demo_cols
+            include_cols = fix_cols + demo_cols
 
-        X, y = self.get_X_y(labels=train_labels, include_cols=include_cols)
+        X, y = self.get_Xy(labels=train_labels, include_cols=include_cols)
         if resample is not None:
-            X, y = self.resample_X_y(X, y, resample_type=resample, series_length=series_length)
+            X, y = resample_Xy(X, y, resample_type=resample, series_length=series_length)
 
         if test_size == 0:
             return X, y
         else:
             if test_labels is not None:
-                X_test, y_test = self.get_X_y(labels=test_labels, include_cols=include_cols)
+                X_test, y_test = self.get_Xy(labels=test_labels, include_cols=include_cols)
                 if resample is not None:
-                    X_test, y_test = self.resample_X_y(X_test, y_test, resample_type=resample,
-                                                       series_length=series_length)
+                    X_test, y_test = resample_Xy(X_test, y_test, resample_type=resample, series_length=series_length)
             else:
                 X, X_test, y, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
             return X, X_test, y, y_test

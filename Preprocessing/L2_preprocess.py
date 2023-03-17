@@ -194,7 +194,7 @@ class L2DataPreprocessor:
 
             f" missing in age_gender or demo    :  {self.age_gender_lang_subject_id.symmetric_difference(self.demo_lang_subject_id)} \n",
             f"missing in age_gender or fixation: {self.age_gender_lang_subject_id.symmetric_difference(self.lang_data_subject_id)} \n",
-            f"missing in fixaiton or demo      : {self.lang_data_subject_id.symmetric_difference(self.demo_lang_subject_id)} \n\n",
+            f"missing in fixation or demo      : {self.lang_data_subject_id.symmetric_difference(self.demo_lang_subject_id)} \n\n",
 
             f" missing in demo vs age_gender    :  {self.demo_lang_subject_id.difference(self.age_gender_lang_subject_id)} \n",
             f"missing in fixation vs age_gender:  {self.lang_data_subject_id.difference(self.age_gender_lang_subject_id)} \n\n",

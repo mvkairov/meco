@@ -1,23 +1,27 @@
-import warnings
-from basic_classifiers import *
+from Preprocessing.MECO_data_split import split_into_rows, concat_MECO_langs
+from basic_classifiers import grid_search_on_data, get_clf_cv_score, best_grid_search_params
+from default_values import default_classifiers
+import numpy as np
+# import warnings
+#
+#
+# def warn(*args, **kwargs):
+#     pass
+#
+#
+# warnings.warn = warn
 
+data = concat_MECO_langs('ru')
+datasets = {
+    'ru_all_texts_fix': split_into_rows(data, cols='fix'),
+    'ru_all_texts_demo': split_into_rows(data, cols='demo'),
+    'ru_all_texts_fix+demo': split_into_rows(data, cols='fix+demo'),
 
-def warn(*args, **kwargs):
-    pass
+    'ru_text2_fix': split_into_rows(data, cols='fix', with_values_only={'Text_ID': [2]}),
+    'ru_text2_fix+demo': split_into_rows(data, cols='fix+demo', with_values_only={'Text_ID': [2]}),
 
-
-warnings.warn = warn
-
-
-data = {
-    'ru_all_texts_fix': getXy('ru', cols='fix'),
-    'ru_all_texts_demo': getXy('ru', cols='demo'),
-
-    'ru_text2_fix': getXy('ru', cols='fix', text_id=2),
-    'ru_text2_demo': getXy('ru', cols='demo', text_id=2),
-
-    'ru_text5_fix': getXy('ru', cols='fix', text_id=5),
-    'ru_text5_demo': getXy('ru', cols='demo', text_id=5)
+    'ru_text5_fix': split_into_rows(data, cols='fix', with_values_only={'Text_ID': [2]}),
+    'ru_text5_fix+demo': split_into_rows(data, cols='fix+demo', with_values_only={'Text_ID': [2]})
 }
 
 test_params = {
@@ -33,17 +37,17 @@ test_params = {
         'solver': ['lbfgs'],
         'verbose': [1]
     },
-    'ab': {
+    'abc': {
         'learning_rate': [0.1],
         'n_estimators': [100],
     },
-    'rf': {
+    'rfc': {
         'n_estimators': [100],
         'min_samples_split': [5],
         'min_samples_leaf': [5],
         'n_jobs': [-1]
     },
-    'gb': {
+    'gbc': {
         'learning_rate': [0.1],
         'n_estimators': [100],
         'min_samples_split': [5],
@@ -53,11 +57,11 @@ test_params = {
 
 
 for data_name, (X, y) in data.items():
-    gs_cv_results = grid_search_on_data(X, y, classifiers='all', params=default_clf_params)
+    gs_cv_results = grid_search_on_data(X, y, classifiers='all')
 
     print(f'Grid search results for {data_name}:\n')
     for clf, results in gs_cv_results.items():
-        best_gs_params = get_best_params(results)
+        best_gs_params = best_grid_search_params(results)
         renamed_params = {}
         for param_name, param in best_gs_params.items():
             renamed_params[param_name] = param
@@ -67,7 +71,7 @@ for data_name, (X, y) in data.items():
             print(f'\t{param_name} = {param}')
         print()
 
-        cv_score = get_cv_score(X, y, clf, renamed_params)
+        cv_score = get_clf_cv_score(X, y, renamed_params)
         print('results below were obtained:')
         for score in cv_score:
             print(f'\t{score} (mean, std):',
