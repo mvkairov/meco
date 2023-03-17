@@ -1,7 +1,6 @@
 from default_values import default_scorers, default_clf_params, default_classifiers
 
-from sklearn.model_selection import cross_validate, GridSearchCV, StratifiedKFold, KFold
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, KFold
+from sklearn.model_selection import cross_validate, GridSearchCV, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 import numpy as np
@@ -57,5 +56,5 @@ def grid_search_on_data(X, y, classifiers=None, params=None):
 def get_clf_cv_score(X, y, clf, params, cv_folds=10, scorers=None):
     if scorers is None:
         scorers = default_scorers
-    cv_scores = cross_validate(clf(**params), X, y, cv=cv_folds, scoring=scorers)
+    cv_scores = cross_validate(clf(**params), X, y, cv=cv_folds, scoring=scorers, n_jobs=-1)
     return cv_scores
