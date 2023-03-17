@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import label_binarize
 from sklearn.utils import shuffle
 
 '''
@@ -29,7 +28,7 @@ def concat_MECO_langs(*langs, path_to_data='../Datasets/DataToUse/'):
     return pd.concat([pd.read_csv(f'{path_to_data}{lang}_fix_demo.csv') for lang in langs])
 
 
-def split_into_rows(data, cols='fix+demo', target='Target_Label', target_onehot=False, with_values_only=None):
+def split_into_rows(data, cols='fix+demo', target='Target_Label', with_values_only=None):
     if cols == 'fix':
         cols = fix_cols
     elif cols == 'demo':
@@ -37,14 +36,12 @@ def split_into_rows(data, cols='fix+demo', target='Target_Label', target_onehot=
     elif cols == 'fix+demo':
         cols = fix_cols + demo_cols
 
-    for col, values in with_values_only.items():
-        data = data[data[col].isin(values)]
+    if with_values_only is not None:
+        for col, values in with_values_only.items():
+            data = data[data[col].isin(values)]
 
     X, y = data[cols], data[target]
     X, y = shuffle(X, y)
-    if target_onehot:
-        y = label_binarize(y, classes=list(range(6)))
-
     return X, y
 
 
