@@ -16,14 +16,14 @@ def best_grid_search_params(cv_results):
     return best_dict
 
 
-def grid_search_on_classifier(classifier, X, y, search_params, n_splits=3, print_best=False):
+def grid_search_on_classifier(classifier, X, y, search_params, n_splits=3, n_jobs=4, print_best=False):
     pipeline = GridSearchCV(
         estimator=Pipeline([
             ('scaler', StandardScaler()),
             ('clf', classifier),
         ]),
         param_grid=dict(zip([f'clf__{param}' for param in search_params], list(search_params.values()))),
-        cv=StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42), n_jobs=-1
+        cv=StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42), n_jobs=n_jobs
     )
 
     pipeline.fit(X, y)
@@ -37,7 +37,7 @@ def grid_search_on_classifier(classifier, X, y, search_params, n_splits=3, print
     return cv_results
 
 
-def grid_search_on_data(X, y, classifiers=None, params=None):
+def grid_search_on_data(X, y, classifiers=None, params=None, n_jobs=4):
     if classifiers == 'all' or classifiers is None:
         classifiers = default_classifiers
 
@@ -49,12 +49,12 @@ def grid_search_on_data(X, y, classifiers=None, params=None):
 
     results = {}
     for clf in classifiers:
-        results[clf] = grid_search_on_classifier(classifiers[clf](), X, y, params[clf])
+        results[clf] = grid_search_on_classifier(classifiers[clf](), X, y, params[clf], n_jobs=n_jobs)
     return results
 
 
-def get_clf_cv_score(X, y, clf, params, cv_folds=10, scorers=None):
+def get_clf_cv_score(X, y, clf, params, cv_folds=10, n_jobs=4, scorers=None):
     if scorers is None:
         scorers = default_scorers
-    cv_scores = cross_validate(clf(**params), X, y, cv=cv_folds, scoring=scorers, n_jobs=-1)
+    cv_scores = cross_validate(clf(**params), X, y, cv=cv_folds, scoring=scorers, n_jobs=n_jobs)
     return cv_scores
