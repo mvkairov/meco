@@ -4,25 +4,32 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, Gradien
 from sklearn.metrics import make_scorer, precision_score, recall_score, f1_score, roc_auc_score, accuracy_score
 from sklearn.preprocessing import label_binarize
 
+knn_n_neighbors = list(range(1, 11))
+knn_p_norm = [x / 20 for x in range(20, 101)]  # [1, 5] range with 0.05-sized steps
+
 mlp_neurons = list(range(10, 201, 10)) + list((i, i) for i in range(10, 201, 10))
-mlp_max_iter = list(range(10, 100, 10)) + list(range(100, 1000, 100)) + \
-             list(range(1000, 10000, 1000)) + list(range(10000, 50001, 5000))
+mlp_max_iter = list(range(1000, 10000, 1000)) + list(range(10000, 50001, 5000))
 mlp_lr = [10 ** i for i in range(-6, -1)]
+mlp_activation = ['identity', 'logistic', 'tanh', 'relu']
+mlp_solver = ['sgd', 'adam']
 
 rfc_estimators = list(range(10, 100, 10)) + list(range(100, 1000, 100)) + list(range(1000, 10001, 1000))
+rfc_min_samples_split = list(range(2, 11))
+rfc_min_samples_leaf = list(range(1, 11))
 gbc_lr = [10 ** (-3), 10 ** (-2)] + [i / 10 for i in range(1, 6)]
+
 
 default_clf_params = {
     'knn': {
-        'n_neighbors': list(range(1, 11)),
-        'p': list(range(1, 6)),
+        'n_neighbors': knn_n_neighbors,
+        'p': knn_p_norm
     },
     'mlp': {
         'hidden_layer_sizes': mlp_neurons,
         'max_iter': mlp_max_iter,
         'learning_rate_init': mlp_lr,
-        'activation': ['identity', 'logistic', 'tanh', 'relu'],
-        'solver': ['sgd', 'adam', 'lbfgs'],
+        'activation': mlp_activation,
+        'solver': mlp_solver,
     },
     'abc': {
         'learning_rate': gbc_lr,
@@ -30,23 +37,23 @@ default_clf_params = {
     },
     'rfc': {
         'n_estimators': rfc_estimators,
-        'min_samples_split': list(range(2, 11)),
-        'min_samples_leaf': list(range(1, 11)),
+        'min_samples_split': rfc_min_samples_split,
+        'min_samples_leaf': rfc_min_samples_leaf,
     },
     'gbc': {
         'learning_rate': gbc_lr,
         'n_estimators': rfc_estimators,
-        'min_samples_split': list(range(2, 11)),
-        'min_samples_leaf': list(range(1, 11)),
+        'min_samples_split': rfc_min_samples_split,
+        'min_samples_leaf': rfc_min_samples_leaf,
     }
 }
 
 default_classifiers = {
     'knn': KNeighborsClassifier,
     'mlp': MLPClassifier,
-    'abc': AdaBoostClassifier,
+    # 'abc': AdaBoostClassifier,
     'rfc': RandomForestClassifier,
-    'gbc': GradientBoostingClassifier
+    # 'gbc': GradientBoostingClassifier
 }
 
 

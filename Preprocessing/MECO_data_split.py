@@ -39,6 +39,8 @@ def split_into_rows(data, cols='fix+demo', target='Target_Label', with_values_on
     if with_values_only is not None:
         for col, values in with_values_only.items():
             data = data[data[col].isin(values)]
+    if cols == 'demo':
+        data.drop_duplicates(subset=cols+[target], keep='first', inplace=True)
 
     X, y = data[cols], data[target]
     X, y = shuffle(X, y)
