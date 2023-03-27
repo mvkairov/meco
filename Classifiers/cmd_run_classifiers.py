@@ -4,10 +4,11 @@ import requests
 import time
 
 langs_ = ['all']
+lang_list = ['du', 'ee', 'fi', 'ge', 'gr', 'he', 'it', 'no', 'ru', 'sp', 'it']
 input_ = 'Datasets/DataToUse/'
 output_ = sys.stdout
 output_name_ = None
-cid_ = None
+cid_ = 381845635
 
 BOT_TOKEN = '6048346687:AAHqaCJC7fYtwJVP1uBm7Q6zPH9TciI_oqA'
 URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
@@ -57,15 +58,34 @@ if __name__ == '__main__':
     if args.output is not None:
         output_name_ = args.output
         output_ = open(args.output, 'w')
+        print(file=output_)
     if args.cid is not None:
         cid_ = args.cid
 
-    datasets = make_datasets(*langs_, path_to_data=input_)
+    dataset_params = {}
+    for lang in langs_:
+        specs = lang.split('_')
+        cur_langs = specs.pop(0).split('+')
+        cur_cols = specs.pop(0)
+        spec_dict = {}
+        for spec in specs:
+            col_name, col_values = spec.split('=')
+            spec_dict[col_name] = col_values.split('+')
+        dataset_params[lang] = {
+            'langs': cur_langs,
+            'cols': cur_cols,
+            'params': spec_dict
+        }
+
     st = time.time()
-    run_check_grid_search_for_datasets(datasets,
-                                       classifiers={'knn': default_classifiers['knn']},
-                                       params=test_params,
-                                       output=output_)
+    for run_name, run_params in dataset_params.items():
+        X, y = make_dataset(*(run_params['langs']),
+                            cols=run_params['cols'],
+                            params=run_params['params'])
+
+        run_check_grid_search_for_dataset(X, y, name=run_name,
+                                          classifiers={'knn': default_classifiers['knn']},
+                                          params=test_params, output=output_)
     et = time.time()
 
     if output_ is not sys.stdout:
