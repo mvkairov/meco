@@ -22,7 +22,7 @@ fix_cols = ['Fix_X', 'Fix_Y', 'Fix_Duration']
 demo_cols = ['motiv', 'IQ', 'Age', 'Sex']
 
 
-def concat_MECO_langs(*langs, path_to_data='../Datasets/DataToUse/'):
+def concat_MECO_langs(langs, path_to_data='../Datasets/DataToUse/'):
     if langs == ['all']:
         langs = lang_list
     return pd.concat([pd.read_csv(f'{path_to_data}{lang}_fix_demo.csv') for lang in langs])
@@ -68,7 +68,7 @@ class MECODataSplit:
             target_rows = ['Target_Label']
         self.target_rows = target_rows
 
-        self.data = concat_MECO_langs(*langs)
+        self.data = concat_MECO_langs(langs)
         self.data = self.data.astype({
             "Text_ID": int,
             "Fix_X": int,

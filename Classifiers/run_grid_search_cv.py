@@ -12,8 +12,8 @@ from default_values import default_classifiers
 import numpy as np
 
 
-def make_dataset(*langs, cols='fix', params=None, path_to_data='Datasets/DataToUse/'):
-    data = concat_MECO_langs(*langs, path_to_data=path_to_data)
+def make_dataset(langs, cols='fix', params=None, path_to_data='Datasets/DataToUse/'):
+    data = concat_MECO_langs(langs, path_to_data=path_to_data)
     X, y = split_into_rows(data, cols=cols, with_values_only=params)
     return X, y
 
