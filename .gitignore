@@ -1,5 +1,5 @@
-output.txt
-requirements.txt
+output.*
 .idea
 __pycache__
 *.DS_Store
+runs
