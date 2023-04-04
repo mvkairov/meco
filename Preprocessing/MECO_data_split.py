@@ -20,6 +20,28 @@ requirements:
 lang_list = ['du', 'ee', 'fi', 'ge', 'gr', 'he', 'it', 'no', 'ru', 'sp', 'it']
 fix_cols = ['Fix_X', 'Fix_Y', 'Fix_Duration']
 demo_cols = ['motiv', 'IQ', 'Age', 'Sex']
+data_types = {
+    "Text_ID": int,
+    "Fix_X": int,
+    "Fix_Y": int,
+    "Fix_Duration": int,
+    "Word_Number": int,
+    "Sentence": str,
+    "Language": str,
+    "SubjectID": str,
+    "L2_spelling_skill": float,
+    "L2_vocabulary_size": float,
+    "vocab.t2.5": float,
+    "L2_lexical_skill": float,
+    "TOWRE_word": float,
+    "TOWRE_nonword": float,
+    "motiv": float,
+    "IQ": float,
+    "Age": int,
+    "Sex": int,
+    "Target_Ave": float,
+    "Target_Label": int
+}
 
 
 def concat_MECO_langs(langs, path_to_data='../Datasets/DataToUse/'):
@@ -36,8 +58,10 @@ def split_into_rows(data, cols='fix+demo', target='Target_Label', with_values_on
     elif cols == 'fix+demo':
         cols = fix_cols + demo_cols
 
+    data = data.astype(data_types)
     if with_values_only is not None:
         for col, values in with_values_only.items():
+            values = [data_types[col](value) for value in values]
             data = data[data[col].isin(values)]
     if cols == 'demo':
         data.drop_duplicates(subset=cols+[target], keep='first', inplace=True)
@@ -69,28 +93,7 @@ class MECODataSplit:
         self.target_rows = target_rows
 
         self.data = concat_MECO_langs(langs)
-        self.data = self.data.astype({
-            "Text_ID": int,
-            "Fix_X": int,
-            "Fix_Y": int,
-            "Fix_Duration": int,
-            "Word_Number": int,
-            "Sentence": str,
-            "Language": str,
-            "SubjectID": str,
-            "L2_spelling_skill": float,
-            "L2_vocabulary_size": float,
-            "vocab.t2.5": float,
-            "L2_lexical_skill": float,
-            "TOWRE_word": float,
-            "TOWRE_nonword": float,
-            "motiv": float,
-            "IQ": float,
-            "Age": int,
-            "Sex": int,
-            "Target_Ave": float,
-            "Target_Label": int
-        })
+        self.data = self.data.astype(data_types)
 
     def get_Xy(self, labels, include_cols):
         X, y = [], []

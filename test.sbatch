@@ -12,4 +12,4 @@ module load Python/Anaconda_v11.2021
 source deactivate
 source activate meco_env
 
-python3 Classifiers/cmd_run_classifiers.py -l du_fix -i "/home/mkairov/L2_MECO/Datasets/DataToUse/" -t
+python3 Classifiers/cmd_run_classifiers.py -l ru-fix-Text_ID=5 -t

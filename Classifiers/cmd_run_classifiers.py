@@ -58,15 +58,13 @@ if __name__ == '__main__':
         input_ = args.input
     if args.output is not None:
         output_name_ = args.output
-        output_ = open(args.output, 'w')
-        print(file=output_)
     if args.cid is not None:
         cid_ = args.cid
     is_test_run = args.test
 
-    dataset_params = {}
     for lang in langs_:
-        specs = lang.split('_')
+        cur_params = {}
+        specs = lang.split('-')
         cur_langs = specs.pop(0).split('+')
         if cur_langs == ['all']:
             cur_langs = lang_list
@@ -75,38 +73,41 @@ if __name__ == '__main__':
         for spec in specs:
             col_name, col_values = spec.split('=')
             spec_dict[col_name] = col_values.split('+')
-        dataset_params[lang] = {
+        cur_params = {
             'langs': cur_langs,
             'cols': cur_cols,
             'params': spec_dict
         }
 
-    st = time.time()
-    for run_name, run_params in dataset_params.items():
-        X, y = make_dataset(run_params['langs'],
-                            cols=run_params['cols'],
-                            params=run_params['params'], path_to_data=input_)
+        if output_name_ is not None:
+            output_ = open(args.output, 'w')
+            print(file=output_)
+
+        X, y = make_dataset(cur_params['langs'],
+                            cols=cur_params['cols'],
+                            params=cur_params['params'], path_to_data=input_)
+        st = time.time()
         if is_test_run:  # run on one set of parameters for debugging
-            run_check_grid_search_for_dataset(X, y, name=run_name,
+            run_check_grid_search_for_dataset(X, y, name=lang,
                                               classifiers={'knn': default_classifiers['knn']},
                                               params=test_params, output=output_)
         else:
-            run_check_grid_search_for_dataset(X, y, name=run_name, output=output_)
-    et = time.time()
+            run_check_grid_search_for_dataset(X, y, name=lang, output=output_)
+        et = time.time()
 
-    if output_ is not sys.stdout:
-        output_.close()
+        if output_name_ is not None:
+            output_.close()
 
-    # Telegram bot for sending results
-    if cid_ is not None and output_name_ is not None:
-        res_file = open(output_name_, 'r')
-        results = res_file.read()
-        res_file.close()
+        # Telegram bot for sending results
+        if cid_ is not None and output_name_ is not None:
+            res_file = open(output_name_, 'r')
+            results = res_file.read()
+            res_file.close()
 
-        formatted_text = f'```{results}```\n' + f'Elapsed time: {round(et - st, 3)} seconds'
-        msg_data = {
-            'chat_id': cid_,
-            'text': formatted_text,
-            'parse_mode': 'markdown'
-        }
-        result = requests.post(url=URL, json=msg_data)
+            formatted_text = f'```{results}```\n' + f'Elapsed time: {round(et - st, 3)} seconds'
+            msg_data = {
+                'chat_id': cid_,
+                'text': formatted_text,
+                'parse_mode': 'markdown'
+            }
+            result = requests.post(url=URL, json=msg_data)
