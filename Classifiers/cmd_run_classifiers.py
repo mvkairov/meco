@@ -85,7 +85,7 @@ if __name__ == '__main__':
     for run_name, run_params in dataset_params.items():
         X, y = make_dataset(run_params['langs'],
                             cols=run_params['cols'],
-                            params=run_params['params'])
+                            params=run_params['params'], path_to_data=input_)
         if is_test_run:  # run on one set of parameters for debugging
             run_check_grid_search_for_dataset(X, y, name=run_name,
                                               classifiers={'knn': default_classifiers['knn']},
