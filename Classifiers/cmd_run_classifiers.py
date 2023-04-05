@@ -5,7 +5,7 @@ import requests
 import time
 import numpy as np
 
-lang_ = None
+langs_ = None
 input_ = 'Datasets/DataToUse/'
 n_jobs_ = 4
 classifiers_ = default_classifiers.keys()
@@ -15,8 +15,8 @@ URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
 CHAT_ID = 381845635
 
 
-def parse_lang(lang):
-    specs = lang.split('-')
+def parse_lang(lang_name):
+    specs = lang_name.split('-')
     cur_langs = specs.pop(0).split('+')
     if cur_langs == ['all']:
         cur_langs = lang_list
@@ -33,8 +33,8 @@ def parse_lang(lang):
     return lang_params
 
 
-def make_msg(clf_name, gs_params, cv_score, el_time):
-    msg = f'For parameters used on {clf} with {lang_}:\n'
+def make_msg(clf_name, lang_name, gs_params, cv_score, el_time):
+    msg = f'For parameters used on {clf_name} with {lang_name}:\n'
     for name, value in gs_params.items():
         msg += f'\t{name} = {value}\n'
     msg += 'results below were obtained (mean, std):\n'
@@ -55,16 +55,16 @@ def send_tg_message(msg):
 
 
 CLI = argparse.ArgumentParser(prog='GridSearch+CV computed on')
-CLI.add_argument('-l', '--lang', type=str, required=True)
-CLI.add_argument('-i', '--input', type=str)
+CLI.add_argument('-l', '--langs', nargs='*', type=str, required=True)
 CLI.add_argument('-c', '--classifiers', nargs='*', type=str)
+CLI.add_argument('-i', '--input', type=str)
 CLI.add_argument('-j', '--jobs', type=int)
 CLI.add_argument('-t', '--test', action='store_true')
 
 if __name__ == '__main__':
     args = CLI.parse_args()
-    if args.lang is not None:
-        lang_ = args.lang
+    if args.langs is not None:
+        langs_ = args.langs
     if args.input is not None:
         input_ = args.input
     if args.classifiers is not None:
@@ -73,19 +73,20 @@ if __name__ == '__main__':
         n_jobs_ = args.jobs
     is_test_run = args.test
 
-    cur_params = parse_lang(lang_)
-    X, y = make_dataset(**cur_params, path_to_data=input_)
-
     for clf in classifiers_:
-        st = time.time()
-        if is_test_run:  # run on one set of parameters for debugging
-            params, score = run_grid_search_cv(X, y, classifier=default_classifiers[clf],
-                                               params=test_params[clf], n_jobs=n_jobs_)
-        else:
-            params, score = run_grid_search_cv(X, y, classifier=default_classifiers[clf],
-                                               params=default_params[clf], n_jobs=n_jobs_)
-        et = time.time()
+        for lang in langs_:
+            cur_params = parse_lang(lang)
+            X, y = make_dataset(**cur_params, path_to_data=input_)
 
-        message = make_msg(clf, params, score, et - st)
-        print(message)
-        send_tg_message(message)
+            st = time.time()
+            if is_test_run:  # run on one set of parameters for debugging
+                params, score = run_grid_search_cv(X, y, classifier=default_classifiers[clf],
+                                                   params=test_params[clf], n_jobs=n_jobs_)
+            else:
+                params, score = run_grid_search_cv(X, y, classifier=default_classifiers[clf],
+                                                   params=default_params[clf], n_jobs=n_jobs_)
+            et = time.time()
+
+            message = make_msg(clf, lang, params, score, et - st)
+            print(message)
+            send_tg_message(message)
