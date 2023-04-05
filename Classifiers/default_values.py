@@ -4,6 +4,8 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, Gradien
 from sklearn.metrics import make_scorer, precision_score, recall_score, f1_score, roc_auc_score, accuracy_score
 from sklearn.preprocessing import label_binarize
 
+lang_list = ['du', 'ee', 'fi', 'ge', 'gr', 'he', 'it', 'no', 'ru', 'sp', 'it']
+
 knn_n_neighbors = list(range(1, 11))
 knn_p_norm = [x / 20 for x in range(20, 101)]  # [1, 5] range with 0.05-sized steps
 
@@ -18,8 +20,7 @@ rfc_min_samples_split = list(range(2, 11))
 rfc_min_samples_leaf = list(range(1, 11))
 gbc_lr = [10 ** (-3), 10 ** (-2)] + [i / 10 for i in range(1, 6)]
 
-
-default_clf_params = {
+default_params = {
     'knn': {
         'n_neighbors': knn_n_neighbors,
         'p': knn_p_norm
@@ -48,12 +49,41 @@ default_clf_params = {
     }
 }
 
+test_params = {
+    'knn': {
+        'n_neighbors': [10],
+        'p': [2.5],
+    },
+    'mlp': {
+        'hidden_layer_sizes': [100],
+        'max_iter': [10000],
+        'learning_rate_init': [10 ** (-3)],
+        'activation': ['relu'],
+        'solver': ['adam'],
+    },
+    'abc': {
+        'learning_rate': [0.1],
+        'n_estimators': [100],
+    },
+    'rfc': {
+        'n_estimators': [100],
+        'min_samples_split': [5],
+        'min_samples_leaf': [5],
+    },
+    'gbc': {
+        'learning_rate': [0.1],
+        'n_estimators': [100],
+        'min_samples_split': [5],
+        'min_samples_leaf': [5],
+    }
+}
+
 default_classifiers = {
     'knn': KNeighborsClassifier,
     'mlp': MLPClassifier,
-    # 'abc': AdaBoostClassifier,
+    'abc': AdaBoostClassifier,
     'rfc': RandomForestClassifier,
-    # 'gbc': GradientBoostingClassifier
+    'gbc': GradientBoostingClassifier
 }
 
 
