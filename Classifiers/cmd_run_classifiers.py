@@ -3,16 +3,13 @@ from default_values import *
 import argparse
 import requests
 import time
+import os
 import numpy as np
 
 langs_ = None
 input_ = 'Datasets/DataToUse/'
 n_jobs_ = 4
 classifiers_ = default_classifiers.keys()
-
-BOT_TOKEN = '6048346687:AAHqaCJC7fYtwJVP1uBm7Q6zPH9TciI_oqA'
-URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-CHAT_ID = 381845635
 
 
 def parse_lang(lang_name):
@@ -45,6 +42,10 @@ def make_msg(clf_name, lang_name, gs_params, cv_score, el_time):
 
 
 def send_tg_message(msg):
+    BOT_TOKEN = os.environ.get('TG_BOT_TOKEN')
+    CHAT_ID = os.environ.get('TG_CHAT_ID')
+
+    URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
     formatted_text = f'```\n{msg}\n```'
     msg_data = {
         'chat_id': CHAT_ID,
@@ -54,12 +55,13 @@ def send_tg_message(msg):
     requests.post(url=URL, json=msg_data)
 
 
-CLI = argparse.ArgumentParser(prog='GridSearch+CV computed on')
+CLI = argparse.ArgumentParser(prog='GridSearch+CV results')
 CLI.add_argument('-l', '--langs', nargs='*', type=str, required=True)
 CLI.add_argument('-c', '--classifiers', nargs='*', type=str)
 CLI.add_argument('-i', '--input', type=str)
 CLI.add_argument('-j', '--jobs', type=int)
 CLI.add_argument('-t', '--test', action='store_true')
+CLI.add_argument('-s', '--send_to_tg', action='store_true')
 
 if __name__ == '__main__':
     args = CLI.parse_args()
@@ -67,11 +69,12 @@ if __name__ == '__main__':
         langs_ = args.langs
     if args.input is not None:
         input_ = args.input
-    if args.classifiers is not None:
+    if args.classifiers is not None and len(args.classifiers) != 0:
         classifiers_ = args.classifiers
     if args.jobs is not None:
         n_jobs_ = args.jobs
     is_test_run = args.test
+    send_to_tg = args.send_to_tg
 
     for clf in classifiers_:
         for lang in langs_:
@@ -89,4 +92,5 @@ if __name__ == '__main__':
 
             message = make_msg(clf, lang, params, score, et - st)
             print(message)
-            send_tg_message(message)
+            if send_to_tg:
+                send_tg_message(message)
