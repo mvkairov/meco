@@ -87,7 +87,7 @@ def resample_Xy(X, y, resample_type=None, series_length=None):
 
 
 class MECODataSplit:
-    def __init__(self, *langs, target_rows=None):
+    def __init__(self, langs, target_rows=None):
         if target_rows is None:
             target_rows = ['Target_Label']
         self.target_rows = target_rows
@@ -125,7 +125,7 @@ class MECODataSplit:
 
         if include_cols == 'fix':
             include_cols = fix_cols
-        elif include_cols == 'demo':
+        elif include_cols == 'fix+demo':
             include_cols = fix_cols + demo_cols
 
         X, y = self.get_Xy(labels=train_labels, include_cols=include_cols)
