@@ -50,7 +50,7 @@ def concat_MECO_langs(langs, path_to_data='../Datasets/DataToUse/'):
     return pd.concat([pd.read_csv(f'{path_to_data}{lang}_fix_demo.csv') for lang in langs])
 
 
-def split_into_rows(data, cols='fix+demo', target='Target_Label', with_values_only=None):
+def split_into_rows(data, cols='fix+demo', target='Target_Label', with_values_only=None, shuffle_data=False):
     if cols == 'fix':
         cols = fix_cols
     elif cols == 'demo':
@@ -67,8 +67,21 @@ def split_into_rows(data, cols='fix+demo', target='Target_Label', with_values_on
         data.drop_duplicates(subset=cols+[target], keep='first', inplace=True)
 
     X, y = data[cols], data[target]
-    X, y = shuffle(X, y)
+    if shuffle_data:
+        X, y = shuffle(X, y)
     return X, y
+
+
+def make_dataset(langs, cols='fix', target='Target_Label', params=None,
+                 cv_col='SubjectID', path_to_data='Datasets/DataToUse/'):
+    data = concat_MECO_langs(langs, path_to_data=path_to_data)
+    X, y = split_into_rows(data, cols=cols, target=target, with_values_only=params)
+
+    if cv_col is not None:
+        keys = data[cv_col].unique()
+        cv_dict = {key: num for num, key in enumerate(keys)}
+        cv_col = np.vectorize(cv_dict.get)(data[cv_col].to_numpy())
+    return X, y, cv_col
 
 
 def resample_Xy(X, y, resample_type=None, series_length=None):
@@ -87,10 +100,10 @@ def resample_Xy(X, y, resample_type=None, series_length=None):
 
 
 class MECODataSplit:
-    def __init__(self, langs, target_rows=None):
-        if target_rows is None:
-            target_rows = ['Target_Label']
-        self.target_rows = target_rows
+    def __init__(self, langs, target_row=None):
+        if target_row is None:
+            target_row = 'Target_Label'
+        self.target_row = target_row
 
         self.data = concat_MECO_langs(langs)
         self.data = self.data.astype(data_types)
@@ -109,7 +122,7 @@ class MECODataSplit:
             cur_rows = self.data.query(condition_query[:-2])
             if not cur_rows.empty:
                 X.append(cur_rows[include_cols])
-                y.append(cur_rows[self.target_rows].iloc[0])
+                y.append(cur_rows[[self.target_row]].iloc[0])
         return X, y
 
     def split_by_unique_values(self, split_cols, include_cols='fix',
