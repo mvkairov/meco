@@ -2,6 +2,7 @@ from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier, \
                              RandomForestRegressor, AdaBoostRegressor, GradientBoostingRegressor
+from skopt.space import Real, Categorical, Integer
 
 from sklearn.metrics import make_scorer, precision_score, recall_score, f1_score, roc_auc_score, accuracy_score, \
                             r2_score, max_error, mean_absolute_error, mean_squared_error
@@ -49,6 +50,39 @@ default_gs_params = {
         'min_samples_leaf': rfc_min_samples_leaf,
     }
 }
+default_bs_params = {
+    'knn': {
+        'n_neighbors': Integer(1, 10),
+        'p': Real(1, 5)
+    },
+    'mlp': {
+        'hidden_layer_sizes': Integer(2, 200, prior='log-uniform'),
+        'max_iter': Integer(10, 50000, prior='log-uniform'),
+        'learning_rate_init': Real(10 ** (-6), 10 ** (-2), prior='log-uniform'),
+        'activation': Categorical(mlp_activation),
+        'solver': Categorical(mlp_solver),
+    },
+    'ab': {
+        'learning_rate': Real(10 ** (-3), 0.5, prior='log-uniform'),
+        'n_estimators': Integer(10, 10000, prior='log-uniform'),
+    },
+    'rf': {
+        'n_estimators': Integer(10, 10000, prior='log-uniform'),
+        'min_samples_split': Integer(2, 10),
+        'min_samples_leaf': Integer(1, 10),
+    },
+    'gb': {
+        'learning_rate': Real(10 ** (-3), 0.5, prior='log-uniform'),
+        'n_estimators': Integer(10, 10000, prior='log-uniform'),
+        'min_samples_split': Integer(2, 10),
+        'min_samples_leaf': Integer(1, 10),
+    }
+}
+default_params = {
+    'Grid': default_gs_params,
+    'Bayes': default_bs_params
+}
+
 test_gs_params = {
     'knn': {
         'n_neighbors': [10],
@@ -77,6 +111,38 @@ test_gs_params = {
         'min_samples_leaf': [5],
     }
 }
+test_bs_params = {
+    'knn': {
+        'n_neighbors': Integer(1, 2),
+        'p': Real(1, 5)
+    },
+    'mlp': {
+        'hidden_layer_sizes': Integer(2, 3),
+        'max_iter': Integer(10, 11),
+        'learning_rate_init': Real(10 ** (-6), 10 ** (-5)),
+        'activation': Categorical(['relu']),
+        'solver': Categorical(['adam']),
+    },
+    'ab': {
+        'learning_rate': Real(10 ** (-3), 10 ** (-2)),
+        'n_estimators': Integer(10, 11),
+    },
+    'rf': {
+        'n_estimators': Integer(10, 11),
+        'min_samples_split': Integer(2, 3),
+        'min_samples_leaf': Integer(1, 2),
+    },
+    'gb': {
+        'learning_rate': Real(10 ** (-3), 10 ** (-2)),
+        'n_estimators': Integer(10, 11),
+        'min_samples_split': Integer(2, 3),
+        'min_samples_leaf': Integer(1, 2),
+    }
+}
+test_params = {
+    'Grid': test_gs_params,
+    'Bayes': test_bs_params
+}
 
 default_classifiers = {
     'knn': KNeighborsClassifier,
@@ -91,6 +157,10 @@ default_regressors = {
     'ab': AdaBoostRegressor,
     'rf': RandomForestRegressor,
     'gb': GradientBoostingRegressor
+}
+default_models = {
+    'Classification': default_classifiers,
+    'Regression': default_regressors
 }
 
 
@@ -113,4 +183,8 @@ regression_scorers = {
     'MAE': make_scorer(mean_absolute_error),
     'max_error': make_scorer(max_error),
     'R2': make_scorer(r2_score)
+}
+default_scorers = {
+    'Classification': classification_scorers,
+    'Regression': regression_scorers
 }

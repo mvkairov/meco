@@ -113,12 +113,13 @@ class MECODataSplit:
         combinations = np.array(np.meshgrid(*labels.values())).T.reshape(-1, len(labels))
 
         for values in combinations:
-            condition_query = ""
+            condition_query = ''
             for col, value in zip(labels.keys(), values):
                 if pd.api.types.is_numeric_dtype(self.data[col]):
-                    condition_query += f"({col} == {value}) & "
+                    condition_query += f'({col} == {value}) & '
                 else:
-                    condition_query += f"({col} == '{value}') & "
+                    value = value.replace("'", '`')
+                    condition_query += f'({col} == "{value}") & '
             cur_rows = self.data.query(condition_query[:-2])
             if not cur_rows.empty:
                 X.append(cur_rows[include_cols])

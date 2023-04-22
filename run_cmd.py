@@ -1,4 +1,4 @@
-from Models.search_methods import gs_cv_results
+from Models.search_methods import search_cv
 from Preprocessing.MECO_data_split import make_dataset, lang_list
 import argparse
 import requests
@@ -10,6 +10,7 @@ input_ = 'Datasets/DataToUse/'
 n_jobs_ = 4
 method_ = 'Classification'
 target_ = 'Target_Label'
+search_ = 'Grid'
 
 
 def parse_lang(lang_name):
@@ -30,9 +31,9 @@ def parse_lang(lang_name):
     return lang_params
 
 
-def make_msg(clf_name, lang_name, gs_results, cv_results, el_time):
+def make_msg(clf_name, lang_name, search_results, cv_results, el_time):
     msg = f'For parameters used on {clf_name} with {lang_name}:\n'
-    for name, value in gs_results.items():
+    for name, value in search_results.items():
         msg += f'\t{name} = {value}\n'
     msg += 'results below were obtained (mean, std):\n'
     for name, value in cv_results.items():
@@ -60,6 +61,7 @@ CLI.add_argument('-l', '--langs', nargs='*', type=str, required=True)
 CLI.add_argument('-m', '--models', nargs='*', type=str, required=True)
 CLI.add_argument('--method', type=str)
 CLI.add_argument('--target', type=str)
+CLI.add_argument('--search', type=str)
 CLI.add_argument('-i', '--input', type=str)
 CLI.add_argument('-j', '--jobs', type=int)
 CLI.add_argument('-d', '--debug', action='store_true')
@@ -75,6 +77,8 @@ if __name__ == '__main__':
         method_ = args.method
     if args.target is not None:
         target_ = args.target
+    if args.search is not None:
+        search_ = args.search
     if args.input is not None:
         input_ = args.input
     if args.jobs is not None:
@@ -88,10 +92,10 @@ if __name__ == '__main__':
 
         for model in models_:
             st = time.time()
-            gs_params, cv_score = gs_cv_results(X, y, model, method_, value_idx, n_jobs=n_jobs_, debug=debug)
+            search_params, cv_score = search_cv(X, y, model, method_, search_, value_idx, n_jobs=n_jobs_, debug=debug)
             et = time.time()
 
-            message = make_msg(model, lang, gs_params, cv_score, et - st)
+            message = make_msg(model, lang, search_params, cv_score, et - st)
             print(message)
             if send_to_tg:
                 send_tg_message(message)
