@@ -72,6 +72,64 @@ def split_into_rows(data, cols='fix+demo', target='Target_Label', with_values_on
     return X, y
 
 
+def truncate_series(X, y, demo, length=None):
+    remove_indices = []
+    for i in range(len(X)):
+        if len(X[i]) >= length:
+            X[i] = X[i][:length]
+        else:
+            remove_indices.append(i)
+    for i in sorted(remove_indices, reverse=True):
+        if i < len(X):
+            X.pop(i)
+            y.pop(i)
+            demo.pop(i)
+    return np.array(X), np.array(y), np.array(demo)
+
+
+def get_series(data, target_row, labels, include_cols):
+    X, y, demo = [], [], []
+    combinations = np.array(np.meshgrid(*labels.values())).T.reshape(-1, len(labels))
+
+    for values in combinations:
+        condition_query = ''
+        for col, value in zip(labels.keys(), values):
+            if pd.api.types.is_numeric_dtype(data[col]):
+                condition_query += f'({col} == {value}) & '
+            else:
+                value = value.replace("'", '`')
+                condition_query += f'({col} == "{value}") & '
+        cur_rows = data.query(condition_query[:-2])
+        if not cur_rows.empty:
+            X.append(cur_rows[include_cols])
+            y.append(cur_rows[[target_row]].iloc[0])
+            demo.append(cur_rows[demo_cols].iloc[0])
+    return X, y, demo
+
+
+def split_into_time_series(data, split_by=None, target='Target_Label',
+                           th=80, length=180, test_size=0.15,
+                           train_labels=None, test_labels=None):
+    if split_by is None:
+        split_by = ['SubjectID', 'Text_ID']
+    data = data.astype(data_types)
+    data = data[data['Fix_Duration'] >= th]
+
+    if train_labels is None:
+        train_labels = dict(zip(split_by, [pd.unique(data[col]) for col in split_by]))
+    X, y, demo = get_series(data, target, train_labels, fix_cols)
+    X, y, demo = truncate_series(X, y, demo, length)
+
+    if test_size == 0:
+        return X, y, demo
+    elif test_labels is not None:
+        X_test, y_test, demo_test = get_series(data, target, test_labels, fix_cols)
+        X_test, y_test, demo_test = truncate_series(X_test, y_test, demo_test, length)
+    else:
+        X, X_test, y, y_test, demo, demo_test = train_test_split(X, y, demo, test_size=test_size)
+    return X, X_test, y, y_test, demo, demo_test
+
+
 def make_dataset(langs, cols='fix', target='Target_Label', params=None,
                  cv_col='SubjectID', path_to_data='Datasets/DataToUse/'):
     data = concat_MECO_langs(langs, path_to_data=path_to_data)
@@ -82,77 +140,3 @@ def make_dataset(langs, cols='fix', target='Target_Label', params=None,
         cv_dict = {key: num for num, key in enumerate(keys)}
         cv_col = np.vectorize(cv_dict.get)(data[cv_col].to_numpy())
     return X, y, cv_col
-
-
-def resample_Xy(X, y, resample_type=None, series_length=None):
-    if resample_type == 'truncate':
-        remove_indices = []
-        for i in range(len(X)):
-            if len(X[i]) >= series_length:
-                X[i] = X[i][:series_length]
-            else:
-                remove_indices.append(i)
-        for i in sorted(remove_indices, reverse=True):
-            if i < len(X):
-                X.pop(i)
-                y.pop(i)
-    return np.array(X), np.array(y)
-
-
-class MECODataSplit:
-    def __init__(self, langs, target_row=None):
-        if target_row is None:
-            target_row = 'Target_Label'
-        self.target_row = target_row
-
-        self.data = concat_MECO_langs(langs)
-        self.data = self.data.astype(data_types)
-
-    def get_Xy(self, labels, include_cols):
-        X, y = [], []
-        combinations = np.array(np.meshgrid(*labels.values())).T.reshape(-1, len(labels))
-
-        for values in combinations:
-            condition_query = ''
-            for col, value in zip(labels.keys(), values):
-                if pd.api.types.is_numeric_dtype(self.data[col]):
-                    condition_query += f'({col} == {value}) & '
-                else:
-                    value = value.replace("'", '`')
-                    condition_query += f'({col} == "{value}") & '
-            cur_rows = self.data.query(condition_query[:-2])
-            if not cur_rows.empty:
-                X.append(cur_rows[include_cols])
-                y.append(cur_rows[[self.target_row]].iloc[0])
-        return X, y
-
-    def split_by_unique_values(self, split_cols, include_cols='fix',
-                               train_on_values=None, test_on_values=None,
-                               fix_threshold=0, resample=None, series_length=None,
-                               test_size=0.15, random_state=42):
-        self.data = self.data[self.data['Fix_Duration'] >= fix_threshold]
-        if train_on_values is not None:
-            train_labels = train_on_values
-        else:
-            train_labels = dict(zip(split_cols, [pd.unique(self.data[col]) for col in split_cols]))
-        test_labels = test_on_values
-
-        if include_cols == 'fix':
-            include_cols = fix_cols
-        elif include_cols == 'fix+demo':
-            include_cols = fix_cols + demo_cols
-
-        X, y = self.get_Xy(labels=train_labels, include_cols=include_cols)
-        if resample is not None:
-            X, y = resample_Xy(X, y, resample_type=resample, series_length=series_length)
-
-        if test_size == 0:
-            return X, y
-        else:
-            if test_labels is not None:
-                X_test, y_test = self.get_Xy(labels=test_labels, include_cols=include_cols)
-                if resample is not None:
-                    X_test, y_test = resample_Xy(X_test, y_test, resample_type=resample, series_length=series_length)
-            else:
-                X, X_test, y, y_test = train_test_split(X, y, test_size=test_size, random_state=random_state)
-            return X, X_test, y, y_test

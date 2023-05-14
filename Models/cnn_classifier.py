@@ -1,6 +1,6 @@
 import sys
 sys.path.append('../')
-from Preprocessing.MECO_data_split import MECODataSplit, concat_MECO_langs
+from Preprocessing.MECO_data_split import concat_MECO_langs, split_into_time_series
 from sklearn.utils import shuffle
 from keras.utils import to_categorical
 
@@ -11,12 +11,8 @@ from scikeras.wrappers import KerasClassifier
 import tensorflow as tf
 tf.config.set_visible_devices([], 'GPU')
 
-df = concat_MECO_langs('ru', path_to_data='../Datasets/DataToUse/')
-dataset = MECODataSplit(df)
-X, y = dataset.split_by_unique_values(split_cols=['SubjectID', 'Text_ID '],
-                                      include_cols='fix',
-                                      test_size=0, fix_threshold=0,
-                                      resample='truncate', series_length=500)
+data = concat_MECO_langs('ru', path_to_data='../Datasets/DataToUse/')
+X, y, demo = split_into_time_series(data)
 
 y = to_categorical(y)
 X, y = shuffle(X, y)
