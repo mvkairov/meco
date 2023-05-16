@@ -72,7 +72,7 @@ def split_into_rows(data, cols='fix+demo', target='Target_Label', with_values_on
     return X, y
 
 
-def truncate_series(X, y, demo, length=None):
+def truncate_series(X, y, demo, length, reuse, overlap):
     remove_indices = []
     for i in range(len(X)):
         if len(X[i]) >= length:
@@ -109,7 +109,8 @@ def get_series(data, target_row, labels, include_cols):
 
 def split_into_time_series(data, split_by=None, target='Target_Label',
                            th=80, length=180, test_size=0.15,
-                           train_labels=None, test_labels=None):
+                           train_labels=None, test_labels=None,
+                           reuse_series=False, reuse_overlap=0):
     if split_by is None:
         split_by = ['SubjectID', 'Text_ID']
     data = data.astype(data_types)
@@ -118,7 +119,7 @@ def split_into_time_series(data, split_by=None, target='Target_Label',
     if train_labels is None:
         train_labels = dict(zip(split_by, [pd.unique(data[col]) for col in split_by]))
     X, y, demo = get_series(data, target, train_labels, fix_cols)
-    X, y, demo = truncate_series(X, y, demo, length)
+    X, y, demo = truncate_series(X, y, demo, length, reuse_series, reuse_overlap)
 
     if test_size == 0:
         return X, y, demo
