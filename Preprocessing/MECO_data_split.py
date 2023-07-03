@@ -108,9 +108,11 @@ def get_series(data, target_row, labels, include_cols):
 
 
 def split_into_time_series(data, split_by=None, target='Target_Label',
-                           th=80, length=180, test_size=0.15,
-                           train_labels=None, test_labels=None,
+                           th=80, truncate=True, length=180, test_size=0.15,
+                           include_cols=None, train_labels=None, test_labels=None,
                            reuse_series=False, reuse_overlap=0):
+    if include_cols is None:
+        include_cols = fix_cols
     if split_by is None:
         split_by = ['SubjectID', 'Text_ID']
     data = data.astype(data_types)
@@ -118,21 +120,25 @@ def split_into_time_series(data, split_by=None, target='Target_Label',
 
     if train_labels is None:
         train_labels = dict(zip(split_by, [pd.unique(data[col]) for col in split_by]))
-    X, y, demo = get_series(data, target, train_labels, fix_cols)
-    X, y, demo = truncate_series(X, y, demo, length, reuse_series, reuse_overlap)
+    X, y, demo = get_series(data, target, train_labels, include_cols)
+    if truncate:
+        X, y, demo = truncate_series(X, y, demo, length, reuse_series, reuse_overlap)
 
     if test_size == 0:
         return X, y, demo
     elif test_labels is not None:
-        X_test, y_test, demo_test = get_series(data, target, test_labels, fix_cols)
-        X_test, y_test, demo_test = truncate_series(X_test, y_test, demo_test, length)
+        X_test, y_test, demo_test = get_series(data, target, test_labels, include_cols)
+        if truncate:
+            X_test, y_test, demo_test = truncate_series(X_test, y_test, demo_test, length, reuse_series, reuse_overlap)
     else:
         X, X_test, y, y_test, demo, demo_test = train_test_split(X, y, demo, test_size=test_size)
     return X, X_test, y, y_test, demo, demo_test
 
 
-def make_dataset(langs, cols='fix', target='Target_Label', params=None,
+def make_dataset(langs=None, cols='fix', target='Target_Label', params=None,
                  cv_col='SubjectID', path_to_data='Datasets/DataToUse/'):
+    if langs is None:
+        langs = lang_list
     data = concat_MECO_langs(langs, path_to_data=path_to_data)
     X, y = split_into_rows(data, cols=cols, target=target, with_values_only=params)
 
